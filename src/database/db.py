@@ -58,10 +58,16 @@ class Database:
         return list(self.tournament.find({}))
 
     """
-    Acualiza datos del torneo
+    Actualiza datos del torneo
     """
     def update_tournament(self,points):
         self.tournament.update_one({"name" : "Los Pibardos"},{"$set" : {"points" : points}})
+
+    """
+    Borra un torneo activo
+    """
+    def delete_tournament(self):
+        self.tournament.delete_one({"name" : "Los Pibardos"})
 
 
     """

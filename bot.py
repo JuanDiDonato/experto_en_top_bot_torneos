@@ -47,14 +47,23 @@ summoners = {
 async def on_ready(): 
     await bot.change_presence(activity=discord.Game(name=".comandos para mas info!"))
     print("Bot conectado")
+    sync_tournament()
+
+
+def sync_tournament():
     tournament = db.get_tournament()
+    print(tournament)
     if len(tournament) > 0:
         print(f"Se encontron {len(tournament)} torneos activos")
         points.update(tournament[0]['points'])
         rounds_saved.extend(tournament[0]['rounds'])
         players_saved.extend(tournament[0]['players'])
         print("Rondas y puntos actualizados")
-        
+    else:
+        print("No se encontraron nuevos datos")
+        points.clear()
+        rounds_saved.clear()
+        players_saved.clear()
 
 """
 Retorna informacion del servidor
@@ -79,6 +88,8 @@ async def comandos(ctx):
     embed.add_field(name=".liga + @nombre del participante + @nombre del participante + ..." , value=f"Crea una liga para un torneo 1 vs 1 de Lol")
     embed.add_field(name=".tabla", value="Muestra la tabla de puntajes de los participantes del torneo")
     embed.add_field(name=".para + @nombre del participante", value="Suma un punto a un participante del torneo")
+    embed.add_field(name=".reiniciar", value="Reinicia los puntos a cero del torneo activo")
+    embed.add_field(name=".borrar", value="Borra el torneo activo")
     embed.add_field(name=".info", value="Muestra informacion del servidor")
     await ctx.send(embed=embed)
 
@@ -125,10 +136,12 @@ Crea la liga con una lista de jugadores
 """
 @bot.command()
 async def liga(ctx,*args):
-    if len(rounds_saved) == 0:
+    if len(rounds_saved) == 0 and len(players_saved) == 0:
         players = [item for item in args]  # Convierte los argumentos a una lista
         league = Tournament(players)
         rounds = league.Generate()
+        rounds_saved.extend(rounds)
+        players_saved.extend(players)
         puntos(players) # Crea una tabla de puntos inicial, con cero puntos para cada participante
         created = db.insert_tournament({"rounds": rounds, "players":players, "points":points, "name":"Los Pibardos"})
         if created == False:
@@ -192,6 +205,23 @@ async def reiniciar(ctx):
         embed = discord.Embed(title="⚠️ 🚨 Ocurrio un error",
         description="No hay un torneo activo para reiniciar los puntajes")
         await ctx.send(embed=embed)
+
+"""
+Borra el torneo activo
+"""
+@bot.command()
+async def borrar(ctx):
+    if len(rounds_saved) > 0 and len(players_saved) > 0:
+        db.delete_tournament()
+        embed = discord.Embed(title="Torneo borrado",
+        description="Se elimino el torneo activo")
+        await ctx.send(embed=embed)
+        sync_tournament()
+    else:
+        embed = discord.Embed(title="⚠️ 🚨 Ocurrio un error",
+        description="No hay un torneo activo para borrar")
+        await ctx.send(embed=embed)
+
 
 
 
