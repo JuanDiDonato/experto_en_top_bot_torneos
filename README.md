@@ -1,4 +1,4 @@
-# experto_en_top_bot_torneos
+# Bot de torneos para Discord
 Bot de discord para un servidor de amigos
 
 El bot esta pensado para crear torneos de 1 vs 1 en League of Legends.
