@@ -12,14 +12,22 @@ from discord.ext import commands
 
 from src.league import Tournament
 from src.riot_api import RiotAPI
+from src.database.db import Database
 
 # Variables de entorno
 load_dotenv()
 TOKEN = os.getenv("TOKEN")
 
+# Base de datos
+db = Database()
+db.start_db()
+
 bot = commands.Bot(command_prefix='.')
-points = {}
 todays_date = date.today() # Fecha actual
+points = {}  # puntos del torneo
+rounds_saved = []
+players_saved = []
+
 
 """
 Ids de Discord con sus equivalentes en nombres de lol
@@ -39,6 +47,14 @@ summoners = {
 async def on_ready(): 
     await bot.change_presence(activity=discord.Game(name=".comandos para mas info!"))
     print("Bot conectado")
+    tournament = db.get_tournament()
+    if len(tournament) > 0:
+        print(f"Se encontron {len(tournament)} torneos activos")
+        points.update(tournament[0]['points'])
+        rounds_saved.extend(tournament[0]['rounds'])
+        players_saved.extend(tournament[0]['players'])
+        print("Rondas y puntos actualizados")
+        
 
 """
 Retorna informacion del servidor
@@ -74,7 +90,7 @@ async def message(ctx,rounds):
     match = 1
     for i in range(0, len(rounds)):
         embed = discord.Embed(title=f"Torneo de Lol Fecha {i + 1}",
-        description=f"Torneo Oficial Fecha {i + 1} "'Los Pibardos '"todos los derechos reservados ©")
+        description=f"Torneo Oficial Fecha {i + 1} "'Los Pibardos 'f"todos los derechos reservados © {todays_date.year}")
         while count < len(rounds[i]):
             embed.add_field(name=f"Partida {match}:" , value=f"{rounds[i][count]} VS {rounds[i][count+1]}")
             match = match + 1
@@ -86,22 +102,43 @@ async def message(ctx,rounds):
 Genera la tabla de puntos
 """
 def puntos(players):
+    list_players = []
+
     for i in players:
         try:
             points[summoners[i]] = 0
+            list_players.append({"player_ds_id":i,"player_name":summoners[i]})
         except:
             points[i] = 0
+            list_players.append({"player_ds_id":i,"player_name":"undefined"})
+
+    db.insert_many_players(list_players)
+
+async def error(ctx):
+    embed = discord.Embed(title="⚠️ 🚨 Ocurrio un error",
+    description="Actualmente ya hay un torneo activo, y hasta que este termine o se borre no se puede crear otro. A continuacion te muestro el torneo activo! ↓↓")
+    await ctx.send(embed=embed)
+    await message(ctx,rounds_saved)
+
 """
 Crea la liga con una lista de jugadores
 """
 @bot.command()
 async def liga(ctx,*args):
-    players = [item for item in args]  # Convierte los argumentos a una lista
-    puntos(players) # Crea una tabla de puntos inicial, con cero puntos para cada participante
-    league = Tournament(players)
-    await ctx.send("Creando liga...")
-    await message(ctx,league.Generate())
-    await tabla(ctx)
+    if len(rounds_saved) == 0:
+        players = [item for item in args]  # Convierte los argumentos a una lista
+        league = Tournament(players)
+        rounds = league.Generate()
+        puntos(players) # Crea una tabla de puntos inicial, con cero puntos para cada participante
+        created = db.insert_tournament({"rounds": rounds, "players":players, "points":points, "name":"Los Pibardos"})
+        if created == False:
+            await error(ctx)
+        else:
+            await ctx.send("Creando liga...")
+            await message(ctx,rounds)
+            await tabla(ctx)
+    else:
+        await error(ctx)
     # account_data = RiotAPI()
     # account_data.get_players_data(players)
 
@@ -111,7 +148,7 @@ Muestra la tabla de puntuacion de cada participante del torneo
 @bot.command()
 async def tabla(ctx):
     embed = discord.Embed(title="Puntos de la Liga",
-    description=f"Puntajes oficiales del Torneo Oficial "'Los Pibardos '"todos los derechos reservados ©")
+    description="Puntajes del Torneo Oficial "'Los Pibardos 'f"todos los derechos reservados © {todays_date.year}")
     for k,v in points.items():
         embed.add_field(name=f"Puntos de {k}", value=f"{v}")
     await ctx.send(embed=embed)
@@ -127,10 +164,35 @@ async def para(ctx,player):
             points[summoners[player]] += 1
             await ctx.send(f"Se agrego un punto a {player}")
             await tabla(ctx)
+            db.update_tournament(points)
         else:
             await ctx.send(f"{player} no esta en este torneo")
     except:
         await ctx.send(f"{player} no esta en este torneo")
+
+
+"""
+Elimina todos los puntos del torneo
+"""
+@bot.command()
+async def reiniciar(ctx):
+    if len(rounds_saved) > 0 and len(players_saved) > 0:
+        points.clear()
+        for p in players_saved:
+            try:
+                points[summoners[p]] = 0
+            except:
+                points[p] = 0
+        db.update_tournament(points)  # Actualiza la base de datos
+        embed = discord.Embed(title=f"Reinicio del torneo Los Pibardos © {todays_date.year}",
+        description="Todos los puntajes del torneo se reiniciaron a cero")
+        await ctx.send(embed=embed)
+        await tabla(ctx)
+    else:
+        embed = discord.Embed(title="⚠️ 🚨 Ocurrio un error",
+        description="No hay un torneo activo para reiniciar los puntajes")
+        await ctx.send(embed=embed)
+
 
 
 
