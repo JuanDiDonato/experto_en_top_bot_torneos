@@ -1,5 +1,6 @@
 
 import os
+import time
 import requests
 
 from dotenv import load_dotenv
@@ -12,7 +13,7 @@ summoners = {
     "<@411704033225605130>":"D1D0",
     "<@602993773940572220>": "KARTTA",
     "<@748722234931282020>":"P4rfecto",
-    "<@258683657038856193>":"Neza",
+    "<@258683657038856193>":"Nezah",
     "<@583500343426547712>":"elioelmufa",
     "<@544348597991243786>":"MaitoChoy",
     "<@712826508229476382>":"Behamoth",
@@ -24,6 +25,9 @@ Consume la API de Riot Games para obtener datos de las cuentas de Lol
 """
 class RiotAPI:
 
+    """
+    Obtiene el puuid y el account id de cada jugador
+    """
     def get_players_data(self,players):
         account_data_list = []
         for player in players:
@@ -31,6 +35,10 @@ class RiotAPI:
                 account_data_list.append(self.get_account_data(summoners[player]))
             except:
                 continue
+
+        for acc in account_data_list:
+            history = self.get_matches(acc['puuid'])
+            acc['statistics']  = self.get_match_results_by_summoner(history,acc['puuid'])
         return account_data_list
 
     def get_account_data(self,summoner):
@@ -39,19 +47,42 @@ class RiotAPI:
         params = {"api_key":KEY}
         try:
             results = requests.get(url,params).json()
-            print(self.get_matches(results['puuid']))
-            account_info[summoner] = (results['puuid'],results['accountId'])
+            account_info['summoner'] = summoner
+            account_info['puuid'] = results['puuid']
+            account_info['account_id'] = results['accountId']
         except:
             pass
         return account_info
     
+    """
+    Obtiene el historial de partidas de cada jugador
+    """
     def get_matches(self,puuid):
-        url = f"https://americas.api.riotgames.com/lol/match/v5/matches/by-puuid/{puuid}/ids"
+        url = f"https://americas.api.riotgames.com/lol/match/v5/matches/by-puuid/{puuid}/ids?startTime={int((time.time() - 259200))}"
         params = {"api_key":KEY}
         try:
             return requests.get(url,params).json()
         except:
             return
+
+    def get_match_results_by_summoner(self,summoner_matches,puuid):
+        last_statistics = []
+        for m in summoner_matches:
+            url = f"https://americas.api.riotgames.com/lol/match/v5/matches/{m}"
+            params = {"api_key":KEY}
+            try:
+                results = requests.get(url,params).json()
+                if len(results['metadata']['participants']) <= 3:
+                    pass
+                else:
+                    for i in results['info']['participants']:
+                        if i['puuid'] == puuid:
+                            last_statistics.append({"champ":i['championName'], "win":i['win']})
+            except:
+                continue
+        return last_statistics
+                
+    
 
 
 

@@ -10,6 +10,7 @@ humanize==4.1.0
 idna==3.3
 multidict==6.0.2
 pycparser==2.21
+pymongo==4.1.1
 PyNaCl==1.4.0
 python-dotenv==0.20.0
 requests==2.27.1

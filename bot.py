@@ -1,8 +1,10 @@
 # -*- coding: utf-8 -*-
 
 import os
+from sqlite3 import Date
 import time
 import datetime
+from threading import Timer
 from datetime import date
 
 import discord
@@ -22,11 +24,19 @@ TOKEN = os.getenv("TOKEN")
 db = Database()
 db.start_db()
 
-bot = commands.Bot(command_prefix='.')
+bot = commands.Bot(command_prefix='.')  # prefix del bot
+
 todays_date = date.today() # Fecha actual
+cron_time = datetime.datetime.now()
 points = {}  # puntos del torneo
 rounds_saved = []
 players_saved = []
+stadistics = []
+
+def setInterval(timer, task):
+    isStop = task()
+    if not isStop:
+        Timer(timer, setInterval, [timer, task]).start()
 
 
 """
@@ -36,23 +46,25 @@ summoners = {
     "<@411704033225605130>":"D1D0",
     "<@602993773940572220>": "KARTTA",
     "<@748722234931282020>":"P4rfecto",
-    "<@258683657038856193>":"Neza",
+    "<@258683657038856193>":"Nezah",
     "<@583500343426547712>":"elioelmufa",
     "<@544348597991243786>":"MaitoChoy",
     "<@712826508229476382>":"Behamoth",
     "<@515334245166743574>":"BALANCE iRELIA",
 }
 
+
 @bot.event
 async def on_ready(): 
     await bot.change_presence(activity=discord.Game(name=".comandos para mas info!"))
     print("Bot conectado")
-    sync_tournament()
+    # await sync_tournament()
+    # sync_check()
+
 
 
 def sync_tournament():
     tournament = db.get_tournament()
-    print(tournament)
     if len(tournament) > 0:
         print(f"Se encontron {len(tournament)} torneos activos")
         points.update(tournament[0]['points'])
@@ -109,6 +121,25 @@ async def message(ctx,rounds):
         await ctx.send(embed=embed)
         count = 0
 
+def update_points():
+    print("Sincronizando historial")
+    if len(players_saved) > 0:
+        account_data = RiotAPI()
+        data = account_data.get_players_data(players_saved)
+        stadistics.extend(data)
+        print("Datos establecidos")
+    else:
+        print("No hay datos para sincronizar")
+
+
+def sync_check():
+    print(cron_time.hour)
+    if cron_time.hour == 15:
+        print("CORRIENDO")
+        update_points()
+
+setInterval(3600,sync_check)
+
 """
 Genera la tabla de puntos
 """
@@ -131,6 +162,43 @@ async def error(ctx):
     await ctx.send(embed=embed)
     await message(ctx,rounds_saved)
 
+async def display_wins(ctx,data):
+    for d in data:
+        print(d)
+        embed = discord.Embed(title="Estadisticas",
+        description=f"Estas son las estadisticas de las partidas de los ultimos 3 dias de {d['summoner']}")
+        
+        for k,v in d.items():
+            if k != 'summoner' and k != 'wins_p':
+                embed.add_field(name=f'Ganadas con {k}', value=f'{v}')
+            elif k == 'wins_p':
+                embed.add_field(name=f'Porcentaje de victorias', value=f'{int(v * 100)} %')
+            else:
+                pass
+        await ctx.send(embed=embed)
+"""
+Muestra las estadisticas
+"""
+@bot.command()
+async def partidas(ctx):
+    wins_by_summoners = []
+    if len(stadistics) > 0:
+        for s in stadistics:
+            wins = {}
+            count = 0
+            for p in s['statistics']:
+                if p['win'] == True:
+                    count = count + 1
+                    try:
+                        wins[p['champ']] = wins[p['champ']] + 1
+                    except:
+                        wins[p['champ']] = 1
+            wins['summoner'] = s['summoner']
+            wins['wins_p'] = count / len(s['statistics'])
+            wins_by_summoners.append(wins)
+        await display_wins(ctx,wins_by_summoners)
+
+
 """
 Crea la liga con una lista de jugadores
 """
@@ -150,10 +218,11 @@ async def liga(ctx,*args):
             await ctx.send("Creando liga...")
             await message(ctx,rounds)
             await tabla(ctx)
+            update_points()
+
     else:
         await error(ctx)
-    # account_data = RiotAPI()
-    # account_data.get_players_data(players)
+
 
 """
 Muestra la tabla de puntuacion de cada participante del torneo
@@ -224,7 +293,15 @@ async def borrar(ctx):
 
 
 
+def sync_check():
+    print(cron_time.hour)
+    if cron_time.hour == 15:
+        print("CORRIENDO")
+        sync_tournament()
+        update_points()
 
+
+setInterval(3600,sync_check)
 
 bot.run(TOKEN)
 
