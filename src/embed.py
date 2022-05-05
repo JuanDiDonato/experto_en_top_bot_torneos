@@ -50,7 +50,7 @@ class Embed():
     """
     async def sync_activate(self,ctx):
         embed = discord.Embed(title="⚠️ Sincronizacion activada",
-        description="Comenzo una sincronizacion con la API de Riot Games y la base de datos para obtener registros. Durante unos minutos puede que el bot no responda a los comandos.")
+        description="Comenzo una sincronizacion con la API de Riot Games y la base de datos para obtener registros.")
         await ctx.send(embed=embed)
 
     """
