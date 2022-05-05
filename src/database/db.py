@@ -29,6 +29,15 @@ class Database:
         return False
 
     """
+    Agrega un jugador a la db. si ya existe, acutaliza su nombre
+    """
+    def insert_one_player(self,player):
+        if self.exists(player["player_ds_id"]) == False:
+            self.players.insert_one(player)
+        else:
+            self.players.update_one({"player_ds_id" : player["player_ds_id"] },{"$set" : {"player_lol_name" : player["player_lol_name"]}})
+        
+    """
     Agrega una lista de jugadores a la base de datos
     """
     def insert_many_players(self,players):
@@ -40,6 +49,12 @@ class Database:
 
         if len(new_players) > 0:
             self.players.insert_many(new_players)
+    
+    """
+    Obtener jugadores
+    """
+    def get_players(self):
+        return list(self.players.find({}))
 
     """
     Agrega el torneo en la base de datos

@@ -30,17 +30,23 @@ class RiotAPI:
     """
     def get_players_data(self,players):
         account_data_list = []
-        for player in players:
+        for k,v in players.items():
             try:
-                account_data_list.append(self.get_account_data(summoners[player]))
+                account_data_list.append(self.get_account_data(v))
             except:
                 continue
+        print(account_data_list)
+        if len(account_data_list) > 0:
+            for acc in account_data_list:
+                history = self.get_matches(acc['puuid'])
+                acc['statistics']  = self.get_match_results_by_summoner(history,acc['puuid'])
+            return account_data_list
+        else:
+            print("Ocurrio un error al obtener los datos")
 
-        for acc in account_data_list:
-            history = self.get_matches(acc['puuid'])
-            acc['statistics']  = self.get_match_results_by_summoner(history,acc['puuid'])
-        return account_data_list
-
+    """
+    Obtiene desde la API los datos de un usuario del juego
+    """
     def get_account_data(self,summoner):
         account_info = {}
         url = f"https://la2.api.riotgames.com/lol/summoner/v4/summoners/by-name/{summoner}"
@@ -65,6 +71,9 @@ class RiotAPI:
         except:
             return
 
+    """
+    Obtiene los detalles de cada partida enviandole el id de la partida
+    """
     def get_match_results_by_summoner(self,summoner_matches,puuid):
         last_statistics = []
         for m in summoner_matches:
@@ -73,6 +82,7 @@ class RiotAPI:
             try:
                 results = requests.get(url,params).json()
                 if len(results['metadata']['participants']) <= 3:
+                    # Validacion para saber si era una partida de torneo o no
                     pass
                 else:
                     for i in results['info']['participants']:
