@@ -2,6 +2,7 @@
 
 import os
 import datetime
+import threading
 from threading import Timer
 from datetime import date
 
@@ -51,11 +52,13 @@ async def on_ready():
     print("Bot conectado")
     get_summoners()
 
+
 def get_summoners():
     summoners_list = db.get_players()
     for s in summoners_list:
         if summoners.get(s['player_ds_id']) == None:
             summoners.update({s['player_ds_id'] : s['player_lol_name']})
+
 """
 Obtiene el torneo y los puntos guardados en la db.
 
@@ -109,13 +112,11 @@ la api de Riot games
 """
 def update_history():
     print("Sincronizando historial")
-    if len(players_saved) > 0:
-        account_data = RiotAPI()
-        data = account_data.get_players_data(summoners)
-        stadistics.extend(data)
-        print("Datos establecidos")
-    else:
-        print("No hay datos para sincronizar")
+    account_data = RiotAPI()
+    data = account_data.get_players_data(summoners)
+    stadistics.extend(data)
+    print("Datos establecidos")
+
 
 """
 Genera la tabla de puntos
@@ -124,7 +125,6 @@ async def puntos(ctx,players):
     list_players = []
     for i in players:
         points[i] = 0
-        print(summoners.get(i), i)
         if summoners.get(i) == None or summoners.get(i) == i:
             await ctx.send(f"🚨 {i} no esta guardado. Usa el comando '.guardar {i} + nombre en lol' 🚨")
             list_players.append({"player_ds_id":i,"player_lol_name":i})
@@ -249,9 +249,16 @@ estadisticas desde la api de riot
 @bot.command()
 async def sync(ctx):
     await msg.sync_activate(ctx)
-    sync_tournament()
-    update_history()
-    get_summoners()
+    get_tour = threading.Thread(target=sync_tournament, name='tour')
+    get_hist = threading.Thread(target=update_history, name='history')
+    get_summ = threading.Thread(target=get_summoners, name='summoners')
+    get_tour.start()
+    get_hist.start()
+    get_summ.start()
+    
+    # sync_tournament()
+    # update_history()
+    # get_summoners()
     await msg.sync_end(ctx)
 
 def sync_check():

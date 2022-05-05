@@ -35,7 +35,6 @@ class RiotAPI:
                 account_data_list.append(self.get_account_data(v))
             except:
                 continue
-        print(account_data_list)
         if len(account_data_list) > 0:
             for acc in account_data_list:
                 history = self.get_matches(acc['puuid'])
