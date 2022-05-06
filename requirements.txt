@@ -6,6 +6,7 @@ cffi==1.15.0
 chardet==4.0.0
 charset-normalizer==2.0.12
 discord.py==1.7.3
+dnspython==2.2.1
 humanize==4.1.0
 idna==3.3
 multidict==6.0.2
