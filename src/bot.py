@@ -26,8 +26,7 @@ th = Threadings()
 
 bot = commands.Bot(command_prefix='.')  # prefix del bot
 
-todays_date = date.today() # Fecha actual
-cron_time = datetime.datetime.now()
+cron_time = datetime.datetime.now() # fecha actual
 
 """
 Funcion para manejar intevalos
@@ -36,7 +35,10 @@ def setInterval(timer, task):
     isStop = task()
     if not isStop:
         Timer(timer, setInterval, [timer, task]).start()
-
+    
+"""
+Evento de inicio del bot
+"""
 @bot.event
 async def on_ready(): 
     await bot.change_presence(activity=discord.Game(name=".comandos para mas info!"))
@@ -45,21 +47,29 @@ async def on_ready():
     sync_tournament()
     update_history()
 
+"""
+Threading que ejecuta la busqueda de usuarios
+"""
 def get_summoners():
     get_summ = threading.Thread(target=th.tr_get_summoners, name='summoners')
     if not get_summ.is_alive():
         get_summ.start()
 
+"""
+Threading que ejecuta la busqueda de torneos
+"""
 def sync_tournament():
     get_tour = threading.Thread(target=th.tr_sync_tournament, name='tour')
     if not get_tour.is_alive():
         get_tour.start()
 
+"""
+Threading que ejecuta la syncro con la api de riot
+"""
 def update_history():
     get_hist = threading.Thread(target=th.tr_update_history, name='history')
     if not get_hist.is_alive():
         get_hist.start()
-
 
 """
 Retorna informacion del servidor
@@ -88,8 +98,6 @@ async def guardar(ctx,*args):
         th.db.insert_one_player(player)
     await ctx.send(f"{data[0]} guardado.")
 
-
-
 """
 Genera la tabla de puntos
 """
@@ -101,7 +109,7 @@ async def puntos(ctx,players):
             await ctx.send(f"🚨 {i} no esta guardado. Usa el comando '.guardar {i} + nombre en lol' 🚨")
             list_players.append({"player_ds_id":i,"player_lol_name":i})
     th.db.insert_many_players(list_players)
-    get_summoners()
+    await sync(ctx)
 
 """
 Muestra en el canal de ds las estadisticas 
@@ -115,7 +123,6 @@ Ordena las estadisticas obtenidas desde la api de riot
 """
 @bot.command()
 async def partidas(ctx):
-
     wins_by_summoners = []
     if len(th.stadistics) > 0:
         for s in th.stadistics:
@@ -130,9 +137,14 @@ async def partidas(ctx):
                         except:
                             wins[p['champ']] = 1
                 wins['summoner'] = s['summoner']
-                wins['wins_p'] = ( count / len(s['statistics']) ) if len(s['statistics']) != 0 else 1
+                if len(s['statistics']) == 0:
+                    wins['wins_p'] = f"{s['summoner']} no jugo en los ultimos 3 dias :("
+                else:
+                    wins['wins_p'] = count / len(s['statistics'])
                 wins_by_summoners.append(wins)
         await display_wins(ctx,wins_by_summoners)
+    else: 
+        await msg.not_data(ctx)
 
 """
 Crea la liga con una lista de jugadores
@@ -155,9 +167,9 @@ async def liga(ctx,*args):
         else:
             await ctx.send("Creando liga...")
             await msg.show_rounds(ctx,rounds)
-            await tabla(ctx)
+            # await tabla(ctx)
             await msg.sync_activate(ctx)
-            update_history()
+            await sync(ctx)
     else:
         await msg.err_tournament(ctx)
 
@@ -216,21 +228,46 @@ Sincronizacion manual
 
 Ejecuta las funciones para obtener el torneo activo desde la base de datos y las
 estadisticas desde la api de riot
+
+Solo hace la syncro si no esta hay activa ninguna otra
 """
 @bot.command()
 async def sync(ctx):
+    sync_h = False
+    sync_t = False
+    sync_s = False
+    for thr in threading.enumerate():
+        if thr.name == "history":
+            sync_h = True
+        elif thr.name == "tour":
+            sync_t = True
+        elif thr.name == "summoners":
+            sync_s = True
     await msg.sync_activate(ctx)
-    get_summoners()
-    sync_tournament()
-    update_history()
+    if not sync_t:
+        sync_tournament()
+    elif not sync_s:
+        get_summoners()
+    elif not sync_h:
+        update_history()
+    else:
+        await msg.sync_is_activate(ctx)
 
+"""
+syncro programada
+"""
 def sync_check():
     hour = datetime.datetime.now().hour
     if hour == 4 or hour == 5 or hour == 3:
-        print("Iniciando sincronizacion programanda")
-        get_summoners()
-        sync_tournament()
-        update_history()
+        sync = False
+        for thr in threading.enumerate():
+            if thr.name == "history" or thr.name == "tour" or thr.name == "summoners":
+                sync = True
+        if not sync:
+            print("Iniciando sincronizacion programanda")
+            get_summoners()
+            sync_tournament()
+            update_history()
 
 
 

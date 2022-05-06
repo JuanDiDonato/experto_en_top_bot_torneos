@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+from re import S
 import time
 from riot_api.riot_api import RiotAPI
 from database.db import Database
@@ -15,6 +16,7 @@ class Threadings():
         self.players_saved = []
         self.summoners = {}
         self.db.start_db()
+        self.count = 0
 
     def tr_update_history(self):
         try:
@@ -22,9 +24,16 @@ class Threadings():
             data = self.account_data.get_players_data(self.summoners)
             self.stadistics.extend(data)
             print("Datos establecidos")   
+            self.count = 0
         except:
-            time.sleep(5)
-            self.tr_update_history()
+            print("Error, reintentando..")
+            self.count = self.count + 1
+            if self.count < 3:
+                time.sleep(5)
+                self.tr_update_history()
+            else:
+                print("Error al obtener estadisticas")
+                self.count = 0
 
     def tr_sync_tournament(self):
         tournament = self.db.get_tournament()

@@ -52,6 +52,22 @@ class Embed():
         embed = discord.Embed(title="⚠️ Sincronizacion activada",
         description="Comenzo una sincronizacion con la API de Riot Games y la base de datos para obtener registros.")
         await ctx.send(embed=embed)
+    
+    """
+    Aviso de sync ya activa
+    """
+    async def sync_is_activate(self,ctx):
+        embed = discord.Embed(title="⚠️ Ya hay una sincronizacion activa",
+        description="Aguarde un momento mientras termina la syncro actual.")
+        await ctx.send(embed=embed)
+
+    """
+    Estadisticas vacias
+    """
+    async def not_data(self,ctx):
+        embed = discord.Embed(title="⚠️ No hay estadisticas para mostrar",
+        description="Ejecute el comando de sync para obtener estadisticas")
+        await ctx.send(embed=embed)
 
     """
     Aviso de finalizacion de la sync
@@ -71,7 +87,10 @@ class Embed():
             if k != 'summoner' and k != 'wins_p':
                 embed.add_field(name=f'Ganadas con {k}', value=f'{v}')
             elif k == 'wins_p':
-                embed.add_field(name=f'Porcentaje de victorias', value=f'{int(v * 100)} %')
+                if type(v) == str:
+                    embed.add_field(name=f'Porcentaje de victorias', value=f'{v}')
+                else:
+                    embed.add_field(name=f'Porcentaje de victorias', value=f'{int(v * 100)} %')
             else:
                 pass
         await ctx.send(embed=embed)
