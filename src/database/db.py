@@ -1,16 +1,26 @@
 # -*- encoding: utf-8 -*-
 
-from pymongo import MongoClient
+from locale import MON_1
+import os
 
-class Database:
+from pymongo import MongoClient
+from dotenv import load_dotenv
+
+load_dotenv()
+
+class Database():
+
+    def __init__(self):
+        self.URI = os.getenv("MONGO_URI")
 
     def conection(self):
         try:
-            client = MongoClient('mongodb://localhost:27017/')
+            client = MongoClient(str(self.URI))
             print("Base de datos conectada")
             self.db = client["tournament"]  # Crea una base de datos
         except:
             print("No se pudo conectar a la base de datos")
+        
     
     """
     Crea las collecciones

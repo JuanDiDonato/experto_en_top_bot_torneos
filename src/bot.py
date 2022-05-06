@@ -5,6 +5,7 @@ import datetime
 import threading
 from threading import Timer
 from datetime import date
+from unicodedata import name
 
 import discord
 from dotenv import load_dotenv
@@ -46,12 +47,13 @@ async def on_ready():
     get_summoners()
     sync_tournament()
     update_history()
+    
 
 """
 Threading que ejecuta la busqueda de usuarios
 """
 def get_summoners():
-    get_summ = threading.Thread(target=th.tr_get_summoners, name='summoners')
+    get_summ = threading.Thread(target=th.tr_get_summoners, name='get_summoners')
     if not get_summ.is_alive():
         get_summ.start()
 
@@ -59,7 +61,7 @@ def get_summoners():
 Threading que ejecuta la busqueda de torneos
 """
 def sync_tournament():
-    get_tour = threading.Thread(target=th.tr_sync_tournament, name='tour')
+    get_tour = threading.Thread(target=th.tr_sync_tournament, name='sync_tournament')
     if not get_tour.is_alive():
         get_tour.start()
 
@@ -67,7 +69,7 @@ def sync_tournament():
 Threading que ejecuta la syncro con la api de riot
 """
 def update_history():
-    get_hist = threading.Thread(target=th.tr_update_history, name='history')
+    get_hist = threading.Thread(target=th.tr_update_history, name='update_history')
     if not get_hist.is_alive():
         get_hist.start()
 
@@ -95,7 +97,7 @@ async def guardar(ctx,*args):
         player = {'player_ds_id':data[0],"player_lol_name": ''.join(e + ' ' for e in data[1:])} # Guarda el nombre con espacios
     else:
         player = {'player_ds_id':data[0],"player_lol_name": data[1]} # Guarda el nombre sin espacios
-        th.db.insert_one_player(player)
+    th.db.insert_one_player(player)
     await ctx.send(f"{data[0]} guardado.")
 
 """
@@ -109,7 +111,6 @@ async def puntos(ctx,players):
             await ctx.send(f"🚨 {i} no esta guardado. Usa el comando '.guardar {i} + nombre en lol' 🚨")
             list_players.append({"player_ds_id":i,"player_lol_name":i})
     th.db.insert_many_players(list_players)
-    await sync(ctx)
 
 """
 Muestra en el canal de ds las estadisticas 
@@ -168,7 +169,6 @@ async def liga(ctx,*args):
             await ctx.send("Creando liga...")
             await msg.show_rounds(ctx,rounds)
             # await tabla(ctx)
-            await msg.sync_activate(ctx)
             await sync(ctx)
     else:
         await msg.err_tournament(ctx)
@@ -233,25 +233,26 @@ Solo hace la syncro si no esta hay activa ninguna otra
 """
 @bot.command()
 async def sync(ctx):
-    sync_h = False
-    sync_t = False
-    sync_s = False
-    for thr in threading.enumerate():
-        if thr.name == "history":
-            sync_h = True
-        elif thr.name == "tour":
-            sync_t = True
-        elif thr.name == "summoners":
-            sync_s = True
+    fuctions_thr = {
+        "get_summoners" : get_summoners,
+        "sync_tournament" : sync_tournament,
+        "update_history" : update_history
+    }
+    sync_active = {
+        "get_summoners" : False,
+        "sync_tournament" : False,
+        "update_history" : False
+    }
     await msg.sync_activate(ctx)
-    if not sync_t:
-        sync_tournament()
-    elif not sync_s:
-        get_summoners()
-    elif not sync_h:
-        update_history()
-    else:
-        await msg.sync_is_activate(ctx)
+    for thr in threading.enumerate():
+        if thr.name == "get_summoner" or thr.name == "sync_tournament" or thr.name == "update_history" :
+            sync_active[thr.name] = True
+
+    for k,v in sync_active.items():
+        if v == False:
+            fuctions_thr[k]()
+            
+
 
 """
 syncro programada
@@ -259,16 +260,23 @@ syncro programada
 def sync_check():
     hour = datetime.datetime.now().hour
     if hour == 4 or hour == 5 or hour == 3:
-        sync = False
+        fuctions_thr = {
+            "get_summoners" : get_summoners,
+            "sync_tournament" : sync_tournament,
+            "update_history" : update_history
+        }
+        sync_active = {
+            "get_summoners" : False,
+            "sync_tournament" : False,
+            "update_history" : False
+        }
         for thr in threading.enumerate():
-            if thr.name == "history" or thr.name == "tour" or thr.name == "summoners":
-                sync = True
-        if not sync:
-            print("Iniciando sincronizacion programanda")
-            get_summoners()
-            sync_tournament()
-            update_history()
+            if thr.name == "get_summoner" or thr.name == "sync_tournament" or thr.name == "update_history" :
+                sync_active[thr.name] = True
 
+        for k,v in sync_active.items():
+            if v == False:
+                fuctions_thr[k]()
 
 
 setInterval(43200,sync_check)

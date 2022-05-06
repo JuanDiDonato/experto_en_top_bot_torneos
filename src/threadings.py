@@ -26,7 +26,6 @@ class Threadings():
             print("Datos establecidos")   
             self.count = 0
         except:
-            print("Error, reintentando..")
             self.count = self.count + 1
             if self.count < 3:
                 time.sleep(5)
@@ -34,6 +33,8 @@ class Threadings():
             else:
                 print("Error al obtener estadisticas")
                 self.count = 0
+            
+
 
     def tr_sync_tournament(self):
         tournament = self.db.get_tournament()
