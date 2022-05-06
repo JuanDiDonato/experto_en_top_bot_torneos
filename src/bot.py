@@ -88,6 +88,13 @@ async def comandos(ctx):
     await msg.show_commands(ctx)
 
 """
+Muestra las fechas del torneo
+"""
+@bot.command()
+async def fechas(ctx):
+    await msg.show_rounds(ctx,th.rounds_saved)
+
+"""
 Guarda el nombre de invocador en la base de datos
 """
 @bot.command()
@@ -252,8 +259,6 @@ async def sync(ctx):
         if v == False:
             fuctions_thr[k]()
             
-
-
 """
 syncro programada
 """

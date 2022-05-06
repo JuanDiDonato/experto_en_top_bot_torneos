@@ -24,7 +24,7 @@ class Embed():
     """
     async def err_tournament(self,ctx):
         embed = discord.Embed(title="⚠️ 🚨 Ocurrio un error",
-        description="Actualmente ya hay un torneo activo, y hasta que este termine o se borre no se puede crear otro. Podes ver este torneo usando .tabla para ver sus puntos, y si no aparece nada intenta sincronizar primero con .sync")
+        description="Actualmente ya hay un torneo activo, y hasta que este termine o se borre no se puede crear otro. Podes ver este torneo usando '.fechas' y '.tabla'. Si no aparece nada intenta sincronizar primero con .sync")
         await ctx.send(embed=embed)
 
     """
@@ -136,6 +136,7 @@ class Embed():
         embed.add_field(name=".borrar", value="Borra el torneo activo")
         embed.add_field(name=".info", value="Muestra informacion del servidor")
         embed.add_field(name=".sync", value="Actualiza las estadisticas manualmente")
+        embed.add_field(name=".fechas", value="Muestra las fechas del torneo actual")
         embed.add_field(name=".guardar + @nombre en ds + nombre en lol", value="Guarda el nombre de lol de un jugador")
         await ctx.send(embed=embed)
     
