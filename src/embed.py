@@ -66,7 +66,7 @@ class Embed():
     """
     async def not_data(self,ctx):
         embed = discord.Embed(title="⚠️ No hay estadisticas para mostrar",
-        description="Ejecute el comando de sync para obtener estadisticas")
+        description="Aguarde mientras se buscan estadisticas nuevas")
         await ctx.send(embed=embed)
 
     """

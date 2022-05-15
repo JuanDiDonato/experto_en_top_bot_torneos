@@ -3,9 +3,9 @@
 import os
 import datetime
 import threading
+import time
 from threading import Timer
 from datetime import date
-from unicodedata import name
 
 import discord
 from dotenv import load_dotenv
@@ -44,9 +44,8 @@ Evento de inicio del bot
 async def on_ready(): 
     await bot.change_presence(activity=discord.Game(name=".comandos para mas info!"))
     print("Bot conectado")
-    get_summoners()
-    sync_tournament()
-    update_history()
+    auto_sync_thr = threading.Thread(target=auto_sync,name="auto_sync")
+    auto_sync_thr.start()
     
 
 """
@@ -175,8 +174,7 @@ async def liga(ctx,*args):
         else:
             await ctx.send("Creando liga...")
             await msg.show_rounds(ctx,rounds)
-            # await tabla(ctx)
-            await sync(ctx)
+            sync()
     else:
         await msg.err_tournament(ctx)
 
@@ -226,20 +224,16 @@ async def borrar(ctx):
     if len(th.rounds_saved) > 0 and len(th.players_saved) > 0:
         th.db.delete_tournament()
         await msg.tournament_deleted(ctx)
-        sync_tournament()
+        sync()
     else:
         await msg.err_not_tournament(ctx)
 
 """
-Sincronizacion manual
-
 Ejecuta las funciones para obtener el torneo activo desde la base de datos y las
 estadisticas desde la api de riot
-
 Solo hace la syncro si no esta hay activa ninguna otra
 """
-@bot.command()
-async def sync(ctx):
+def sync():
     fuctions_thr = {
         "get_summoners" : get_summoners,
         "sync_tournament" : sync_tournament,
@@ -250,7 +244,7 @@ async def sync(ctx):
         "sync_tournament" : False,
         "update_history" : False
     }
-    await msg.sync_activate(ctx)
+    # await msg.sync_activate(ctx)
     for thr in threading.enumerate():
         if thr.name == "get_summoner" or thr.name == "sync_tournament" or thr.name == "update_history" :
             sync_active[thr.name] = True
@@ -258,34 +252,16 @@ async def sync(ctx):
     for k,v in sync_active.items():
         if v == False:
             fuctions_thr[k]()
-            
+                   
 """
-syncro programada
+Sincronizacion de datos automatica
 """
-def sync_check():
-    hour = datetime.datetime.now().hour
-    if hour == 4 or hour == 5 or hour == 3:
-        fuctions_thr = {
-            "get_summoners" : get_summoners,
-            "sync_tournament" : sync_tournament,
-            "update_history" : update_history
-        }
-        sync_active = {
-            "get_summoners" : False,
-            "sync_tournament" : False,
-            "update_history" : False
-        }
-        for thr in threading.enumerate():
-            if thr.name == "get_summoner" or thr.name == "sync_tournament" or thr.name == "update_history" :
-                sync_active[thr.name] = True
+def auto_sync():
+    while True:
+        sync()
+        time.sleep(600)  # diez minutos
 
-        for k,v in sync_active.items():
-            if v == False:
-                fuctions_thr[k]()
-
-
-setInterval(43200,sync_check)
-
+    
 bot.run(TOKEN)
 
 

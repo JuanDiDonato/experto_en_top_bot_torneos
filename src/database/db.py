@@ -1,6 +1,5 @@
 # -*- encoding: utf-8 -*-
 
-from locale import MON_1
 import os
 
 from pymongo import MongoClient
@@ -93,7 +92,6 @@ class Database():
     """
     def delete_tournament(self):
         self.tournament.delete_one({"name" : "Los Pibardos"})
-
 
     """
     Inicia la base de datos
