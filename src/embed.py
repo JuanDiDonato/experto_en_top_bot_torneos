@@ -66,7 +66,7 @@ class Embed():
     """
     async def not_data(self,ctx):
         embed = discord.Embed(title="⚠️ No hay estadisticas para mostrar",
-        description="Aguarde mientras se buscan estadisticas nuevas")
+        description="Los datos se obtienen automaticamente, aguarde un momento y vuelva a intentar")
         await ctx.send(embed=embed)
 
     """
@@ -135,7 +135,6 @@ class Embed():
         embed.add_field(name=".reiniciar", value="Reinicia los puntos a cero del torneo activo")
         embed.add_field(name=".borrar", value="Borra el torneo activo")
         embed.add_field(name=".info", value="Muestra informacion del servidor")
-        embed.add_field(name=".sync", value="Actualiza las estadisticas manualmente")
         embed.add_field(name=".fechas", value="Muestra las fechas del torneo actual")
         embed.add_field(name=".guardar + @nombre en ds + nombre en lol", value="Guarda el nombre de lol de un jugador")
         await ctx.send(embed=embed)
