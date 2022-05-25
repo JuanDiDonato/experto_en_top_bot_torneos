@@ -2,6 +2,7 @@
 
 import datetime
 from datetime import date
+from operator import itemgetter
 
 import discord
 import humanize
@@ -84,15 +85,25 @@ class Embed():
         embed = discord.Embed(title="Estadisticas",
         description=f"Estas son las estadisticas de las partidas de los ultimos 3 dias de {data['summoner']}")
         for k,v in data.items():
-            if k != 'summoner' and k != 'wins_p':
-                embed.add_field(name=f'Ganadas con {k}', value=f'{v}')
+            if k == "wins":
+                most_wins = max(v.items(), key=itemgetter(1))[0]  # Retorna con que campeon gano mas
+                embed.add_field(name=f'Gano mas partidas con {most_wins}', value=f' {v[most_wins]} victorias')
+            elif k == "defeats":
+                most_defeat = max(v.items(),key=itemgetter(1))[0]  # Retorna con que campeon perdio mas
+                embed.add_field(name=f'Perdio mas partidas con {most_defeat}', value=f'{v[most_defeat]} derrotas')
             elif k == 'wins_p':
                 if type(v) == str:
                     embed.add_field(name=f'Porcentaje de victorias', value=f'{v}')
                 else:
                     embed.add_field(name=f'Porcentaje de victorias', value=f'{int(v * 100)} %')
+            elif k == "played":
+                for c,p in v.items():
+                    try:
+                        winrate = int((data["wins"][c] / p)*100)
+                    except: winrate = 0
+                    embed.add_field(name=f'{c}', value=f'Jugadas: {p} Winrate: {winrate} %')
             else:
-                pass
+                continue
         await ctx.send(embed=embed)
 
     """

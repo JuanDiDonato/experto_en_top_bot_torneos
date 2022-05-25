@@ -134,21 +134,36 @@ async def partidas(ctx):
     if len(th.stadistics) > 0:
         for s in th.stadistics:
             if s['summoner'] != "Fecha libre":
+                summoner_data = {}
                 wins = {}
-                count = 0
+                defeat = {}
+                played = {}
+                win_count = 0
+                def_count = 0
                 for p in s['statistics']:
+                    try: played[p['champ']] = played[p['champ']] + 1
+                    except: played[p['champ']] = 1
                     if p['win'] == True:
-                        count = count + 1
+                        win_count = win_count + 1
                         try:
                             wins[p['champ']] = wins[p['champ']] + 1
                         except:
                             wins[p['champ']] = 1
-                wins['summoner'] = s['summoner']
+                    else:
+                        def_count = def_count + 1
+                        try:
+                            defeat[p['champ']] = defeat[p['champ']] + 1
+                        except:
+                            defeat[p['champ']] = 1
+                summoner_data["wins"] = wins
+                summoner_data["defeats"] = defeat
+                summoner_data["played"] = played
+                summoner_data['summoner'] = s['summoner']
                 if len(s['statistics']) == 0:
-                    wins['wins_p'] = f"{s['summoner']} no jugo en los ultimos 3 dias :("
+                    summoner_data['wins_p'] = f"{s['summoner']} no jugo en los ultimos 3 dias :("
                 else:
-                    wins['wins_p'] = count / len(s['statistics'])
-                wins_by_summoners.append(wins)
+                    summoner_data['wins_p'] = win_count / len(s['statistics'])
+                wins_by_summoners.append(summoner_data)
         await display_wins(ctx,wins_by_summoners)
     else: 
         await msg.not_data(ctx)
@@ -244,7 +259,6 @@ def sync():
         "sync_tournament" : False,
         "update_history" : False
     }
-    # await msg.sync_activate(ctx)
     for thr in threading.enumerate():
         if thr.name == "get_summoner" or thr.name == "sync_tournament" or thr.name == "update_history" :
             sync_active[thr.name] = True
@@ -261,8 +275,8 @@ def auto_sync():
         sync()
         time.sleep(600)  # diez minutos
 
-    
-bot.run(TOKEN)
+if "__main__" == __name__:
+    bot.run(TOKEN)
 
 
 
