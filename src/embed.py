@@ -86,11 +86,17 @@ class Embed():
         description=f"Estas son las estadisticas de las partidas de los ultimos 3 dias de {data['summoner']}")
         for k,v in data.items():
             if k == "wins":
-                most_wins = max(v.items(), key=itemgetter(1))[0]  # Retorna con que campeon gano mas
-                embed.add_field(name=f'Gano mas partidas con {most_wins}', value=f' {v[most_wins]} victorias')
+                try:
+                    most_wins = max(v.items(), key=itemgetter(1))[0]  # Retorna con que campeon gano mas
+                    embed.add_field(name=f'Gano mas partidas con {most_wins}', value=f' {v[most_wins]} victorias')
+                except:
+                    continue
             elif k == "defeats":
-                most_defeat = max(v.items(),key=itemgetter(1))[0]  # Retorna con que campeon perdio mas
-                embed.add_field(name=f'Perdio mas partidas con {most_defeat}', value=f'{v[most_defeat]} derrotas')
+                try:
+                    most_defeat = max(v.items(),key=itemgetter(1))[0]  # Retorna con que campeon perdio mas
+                    embed.add_field(name=f'Perdio mas partidas con {most_defeat}', value=f'{v[most_defeat]} derrotas')
+                except:
+                    continue
             elif k == 'wins_p':
                 if type(v) == str:
                     embed.add_field(name=f'Porcentaje de victorias', value=f'{v}')
