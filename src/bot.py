@@ -27,7 +27,6 @@ th = Threadings()
 
 bot = commands.Bot(command_prefix='.')  # prefix del bot
 
-cron_time = datetime.datetime.now() # fecha actual
 
 """
 Funcion para manejar intevalos
@@ -140,21 +139,24 @@ async def partidas(ctx):
                 played = {}
                 win_count = 0
                 def_count = 0
-                for p in s['statistics']:
-                    try: played[p['champ']] = played[p['champ']] + 1
-                    except: played[p['champ']] = 1
-                    if p['win'] == True:
-                        win_count = win_count + 1
-                        try:
-                            wins[p['champ']] = wins[p['champ']] + 1
-                        except:
-                            wins[p['champ']] = 1
-                    else:
-                        def_count = def_count + 1
-                        try:
-                            defeat[p['champ']] = defeat[p['champ']] + 1
-                        except:
-                            defeat[p['champ']] = 1
+                try:
+                    for p in s['statistics']:
+                        try: played[p['champ']] = played[p['champ']] + 1
+                        except: played[p['champ']] = 1
+                        if p['win'] == True:
+                            win_count = win_count + 1
+                            try:
+                                wins[p['champ']] = wins[p['champ']] + 1
+                            except:
+                                wins[p['champ']] = 1
+                        else:
+                            def_count = def_count + 1
+                            try:
+                                defeat[p['champ']] = defeat[p['champ']] + 1
+                            except:
+                                defeat[p['champ']] = 1
+                except:
+                    continue
                 summoner_data["wins"] = wins
                 summoner_data["defeats"] = defeat
                 summoner_data["played"] = played

@@ -37,8 +37,11 @@ class RiotAPI:
                 continue
         if len(account_data_list) > 0:
             for acc in account_data_list:
-                history = self.get_matches(acc['puuid'])
-                acc['statistics']  = self.get_match_results_by_summoner(history,acc['puuid'])
+                try:
+                    history = self.get_matches(acc['puuid'])
+                    acc['statistics']  = self.get_match_results_by_summoner(history,acc['puuid'])
+                except:
+                    continue
             return account_data_list
         else:
             print("Ocurrio un error al obtener los datos")

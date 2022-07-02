@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import time
+
 from riot_api.riot_api import RiotAPI
 from database.db import Database
 
