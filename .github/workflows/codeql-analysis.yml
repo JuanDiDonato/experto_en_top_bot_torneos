@@ -70,16 +70,3 @@ jobs:
 
     - name: Perform CodeQL Analysis
       uses: github/codeql-action/analyze@v2
-      
-  linter:
-    runs-on: ubuntu-latest
-    permissions:
-      checks: write
-      pull-requests: write
-      contents: read
-    steps:
-    - uses: actions/checkout@v3
-    - uses: smelly-python/smell-my-pr@main
-      with: 
-        github-token: ${{secrets.GIT_TOKEN}}
-        command: smelly-python -d src
