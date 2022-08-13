@@ -107,7 +107,7 @@ class Embed():
                     try:
                         winrate = int((data["wins"][c] / p)*100)
                     except: winrate = 0
-                    embed.add_field(name=f'{c}', value=f'Jugadas: {p} Winrate: {winrate} %')
+                    embed.add_field(name=f'{c}', value=f'Jugo: {p} partidas, Winrate: {winrate} %')
             else:
                 continue
         await ctx.send(embed=embed)
