@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Smelly Python code smell report</title>
+    <link href="../style.css" rel="stylesheet">
+    <link href="../idea.min.css" rel="stylesheet">
+  </head>
+  <body>
+    <h1>Smelly Python</h1>
+    <div id="src/embed.py">
+      <h4>
+        <a href="../index.html">Home</a> &gt; src/embed.py
+      </h4>
+      <pre id="code-block"><code class="language-python"># -*- coding: utf-8 -*-
+
+import datetime
+from datetime import date
+from operator import itemgetter
+
+import discord
+import humanize
+
+class Embed():
+
+    def __init__(self):
+        self.today = date.today() # Fecha actual
+
+    &quot;&quot;&quot;
+    No hay un torneo
+    &quot;&quot;&quot;
+    async def err_not_tournament(self,ctx):
+        embed = discord.Embed(title=&quot;⚠️ 🚨 Ocurrio un error&quot;,
+        description=&quot;No hay un torneo activo actualmente&quot;)
+        await ctx.send(embed=embed)
+
+    &quot;&quot;&quot;
+    Ya hay un torneo
+    &quot;&quot;&quot;
+    async def err_tournament(self,ctx):
+        embed = discord.Embed(title=&quot;⚠️ 🚨 Ocurrio un error&quot;,
+        description=&quot;Actualmente ya hay un torneo activo, y hasta que este termine o se borre no se puede crear otro. Podes ver este torneo usando '.fechas' y '.tabla'. Si no aparece nada intenta sincronizar primero con .sync&quot;)
+        await ctx.send(embed=embed)
+
+    &quot;&quot;&quot;
+    Reinicio de puntos
+    &quot;&quot;&quot;
+    async def rest_points_tournament(self,ctx):
+        embed = discord.Embed(title=f&quot;Reinicio del torneo Los Pibardos © {self.today.year}&quot;,
+        description=&quot;Todos los puntajes del torneo se reiniciaron a cero&quot;)
+        await ctx.send(embed=embed)
+
+    &quot;&quot;&quot;
+    Muestra los puntos
+    &quot;&quot;&quot;
+    async def show_points(self,ctx,points):
+        embed = discord.Embed(title=&quot;Puntos de la Liga&quot;,
+        description=&quot;Puntajes del Torneo Oficial &quot;'Los Pibardos 'f&quot;todos los derechos reservados © {self.today.year}&quot;)
+        for k,v in points.items():
+            embed.add_field(name=f&quot;Puntos de:&quot;, value=f&quot;{k} : {v}&quot;)
+        await ctx.send(embed=embed)
+    
+    &quot;&quot;&quot;
+    Aviso de la sync
+    &quot;&quot;&quot;
+    async def sync_activate(self,ctx):
+        embed = discord.Embed(title=&quot;⚠️ Sincronizacion activada&quot;,
+        description=&quot;Comenzo una sincronizacion con la API de Riot Games y la base de datos para obtener registros.&quot;)
+        await ctx.send(embed=embed)
+    
+    &quot;&quot;&quot;
+    Aviso de sync ya activa
+    &quot;&quot;&quot;
+    async def sync_is_activate(self,ctx):
+        embed = discord.Embed(title=&quot;⚠️ Ya hay una sincronizacion activa&quot;,
+        description=&quot;Aguarde un momento mientras termina la syncro actual.&quot;)
+        await ctx.send(embed=embed)
+
+    &quot;&quot;&quot;
+    Estadisticas vacias
+    &quot;&quot;&quot;
+    async def not_data(self,ctx):
+        embed = discord.Embed(title=&quot;⚠️ No hay estadisticas para mostrar&quot;,
+        description=&quot;Los datos se obtienen automaticamente, aguarde un momento y vuelva a intentar&quot;)
+        await ctx.send(embed=embed)
+
+    &quot;&quot;&quot;
+    Aviso de finalizacion de la sync
+    &quot;&quot;&quot;
+    async def sync_end(self,ctx):
+        embed = discord.Embed(title=&quot;✅ Sincronizacion finalizada&quot;,
+        description=&quot;Se sincronizaron los datos correctamente.&quot;)
+        await ctx.send(embed=embed)
+
+    &quot;&quot;&quot;
+    Muesta estadisticas
+    &quot;&quot;&quot;
+    async def show_stats(self,ctx,data):
+        embed = discord.Embed(title=&quot;Estadisticas&quot;,
+        description=f&quot;Estas son las estadisticas de las partidas de los ultimos 3 dias de {data['summoner']}&quot;)
+        for k,v in data.items():
+            if k == &quot;wins&quot;:
+                try:
+                    most_wins = max(v.items(), key=itemgetter(1))[0]  # Retorna con que campeon gano mas
+                    embed.add_field(name=f'Gano mas partidas con {most_wins}', value=f' {v[most_wins]} victorias')
+                except:
+                    continue
+            elif k == &quot;defeats&quot;:
+                try:
+                    most_defeat = max(v.items(),key=itemgetter(1))[0]  # Retorna con que campeon perdio mas
+                    embed.add_field(name=f'Perdio mas partidas con {most_defeat}', value=f'{v[most_defeat]} derrotas')
+                except:
+                    continue
+            elif k == 'wins_p':
+                if type(v) == str:
+                    embed.add_field(name=f'Porcentaje de victorias', value=f'{v}')
+                else:
+                    embed.add_field(name=f'Porcentaje de victorias', value=f'{int(v * 100)} %')
+            elif k == &quot;played&quot;:
+                for c,p in v.items():
+                    try:
+                        winrate = int((data[&quot;wins&quot;][c] / p)*100)
+                    except: winrate = 0
+                    embed.add_field(name=f'{c}', value=f'Jugo: {p} partidas, Winrate: {winrate} %')
+            else:
+                continue
+        await ctx.send(embed=embed)
+
+    &quot;&quot;&quot;
+    Muestra las fechas de la liga
+    &quot;&quot;&quot;
+    async def show_rounds(self,ctx,rounds):
+        count = 0
+        match = 1
+        for i in range(0, len(rounds)):
+            embed = discord.Embed(title=f&quot;Torneo de Lol Fecha {i + 1}&quot;,
+            description=f&quot;Torneo Oficial Fecha {i + 1} &quot;'Los Pibardos 'f&quot;todos los derechos reservados © {self.today.year}&quot;)
+            while count &lt; len(rounds[i]):
+                embed.add_field(name=f&quot;Partida {match}:&quot; , value=f&quot;{rounds[i][count]} VS {rounds[i][count+1]}&quot;)
+                match = match + 1
+                count = count + 2
+            await ctx.send(embed=embed)
+            count = 0
+
+    &quot;&quot;&quot;
+    Informacion del server
+    &quot;&quot;&quot;
+    async def show_server_info(self,ctx):
+        embed = discord.Embed(title=f&quot;{ctx.guild.name}&quot;,
+        description=f&quot;Server de Los Pibardos todos los derechos reservados © {self.today.year}&quot;,timestamp=datetime.datetime.utcnow(), color=discord.Color.red())
+        embed.add_field(name=&quot;Creado el dia&quot; , value=humanize.naturaltime(ctx.guild.created_at))
+        embed.add_field(name=&quot;Admin&quot;, value=&quot;&lt;@602993773940572220&gt;&quot;)
+        embed.add_field(name=&quot;Server id &quot;, value=f&quot;{ctx.guild.id}&quot;)
+        embed.set_thumbnail(url=&quot;https://pbs.twimg.com/profile_images/1268868861782298626/doLOgx55.jpg&quot;)
+        await ctx.send(embed=embed)
+    
+    &quot;&quot;&quot;
+    Comandos del server
+    &quot;&quot;&quot;
+    async def show_commands(self,ctx):
+        embed = discord.Embed(title=&quot;Comandos de Experto en Top:&quot;,
+        description=f&quot;Creado por &lt;@411704033225605130&gt;, proyecto en desarrollo. Todos los derechos reservados © {self.today.year}&quot;,timestamp=datetime.datetime.utcnow(), color=discord.Color.red())
+        embed.add_field(name=&quot;.liga + @nombre del participante + @nombre del participante + ...&quot; , value=f&quot;Crea una liga para un torneo 1 vs 1 de Lol&quot;)
+        embed.add_field(name=&quot;.tabla&quot;, value=&quot;Muestra la tabla de puntajes de los participantes del torneo&quot;)
+        embed.add_field(name=&quot;.para + @nombre del participante&quot;, value=&quot;Suma un punto a un participante del torneo&quot;)
+        embed.add_field(name=&quot;.reiniciar&quot;, value=&quot;Reinicia los puntos a cero del torneo activo&quot;)
+        embed.add_field(name=&quot;.borrar&quot;, value=&quot;Borra el torneo activo&quot;)
+        embed.add_field(name=&quot;.info&quot;, value=&quot;Muestra informacion del servidor&quot;)
+        embed.add_field(name=&quot;.fechas&quot;, value=&quot;Muestra las fechas del torneo actual&quot;)
+        embed.add_field(name=&quot;.guardar + @nombre en ds + nombre en lol&quot;, value=&quot;Guarda el nombre de lol de un jugador&quot;)
+        await ctx.send(embed=embed)
+    
+    &quot;&quot;&quot;
+    Eliminacion del torneo
+    &quot;&quot;&quot;
+    async def tournament_deleted(self,ctx):
+        embed = discord.Embed(title=&quot;Torneo borrado&quot;,
+        description=&quot;Se elimino el torneo activo&quot;)
+        await ctx.send(embed=embed)
+
+</code></pre>
+    </div>
+    <footer>
+      <script src="..//highlight.min.js"></script>
+      <script src="..//highlightjs-line-numbers.min.js"></script>
+      <script>hljs.highlightAll();</script>
+      <script src="..//script.js"></script>
+      <script>setSmells([{"type": "convention", "location": {"module": "embed", "python_object": "", "line": 28, "column": 0, "end_line": null, "path": "src/embed.py", "severity": 0, "type": "convention"}, "symbol": "line-too-long", "message": "Line too long (227/100)", "message_id": "C0301", "severity": 0},{"type": "convention", "location": {"module": "embed", "python_object": "", "line": 44, "column": 0, "end_line": null, "path": "src/embed.py", "severity": 0, "type": "convention"}, "symbol": "line-too-long", "message": "Line too long (118/100)", "message_id": "C0301", "severity": 0},{"type": "convention", "location": {"module": "embed", "python_object": "", "line": 48, "column": 0, "end_line": null, "path": "src/embed.py", "severity": 0, "type": "convention"}, "symbol": "trailing-whitespace", "message": "Trailing whitespace", "message_id": "C0303", "severity": 0},{"type": "convention", "location": {"module": "embed", "python_object": "", "line": 54, "column": 0, "end_line": null, "path": "src/embed.py", "severity": 0, "type": "convention"}, "symbol": "line-too-long", "message": "Line too long (117/100)", "message_id": "C0301", "severity": 0},{"type": "convention", "location": {"module": "embed", "python_object": "", "line": 56, "column": 0, "end_line": null, "path": "src/embed.py", "severity": 0, "type": "convention"}, "symbol": "trailing-whitespace", "message": "Trailing whitespace", "message_id": "C0303", "severity": 0},{"type": "convention", "location": {"module": "embed", "python_object": "", "line": 86, "column": 0, "end_line": null, "path": "src/embed.py", "severity": 0, "type": "convention"}, "symbol": "line-too-long", "message": "Line too long (110/100)", "message_id": "C0301", "severity": 0},{"type": "convention", "location": {"module": "embed", "python_object": "", "line": 90, "column": 0, "end_line": null, "path": "src/embed.py", "severity": 0, "type": "convention"}, "symbol": "line-too-long", "message": "Line too long (104/100)", "message_id": "C0301", "severity": 0},{"type": "convention", "location": {"module": "embed", "python_object": "", "line": 91, "column": 0, "end_line": null, "path": "src/embed.py", "severity": 0, "type": "convention"}, "symbol": "line-too-long", "message": "Line too long (114/100)", "message_id": "C0301", "severity": 0},{"type": "convention", "location": {"module": "embed", "python_object": "", "line": 96, "column": 0, "end_line": null, "path": "src/embed.py", "severity": 0, "type": "convention"}, "symbol": "line-too-long", "message": "Line too long (107/100)", "message_id": "C0301", "severity": 0},{"type": "convention", "location": {"module": "embed", "python_object": "", "line": 97, "column": 0, "end_line": null, "path": "src/embed.py", "severity": 0, "type": "convention"}, "symbol": "line-too-long", "message": "Line too long (118/100)", "message_id": "C0301", "severity": 0},{"type": "convention", "location": {"module": "embed", "python_object": "", "line": 123, "column": 0, "end_line": null, "path": "src/embed.py", "severity": 0, "type": "convention"}, "symbol": "line-too-long", "message": "Line too long (124/100)", "message_id": "C0301", "severity": 0},{"type": "convention", "location": {"module": "embed", "python_object": "", "line": 125, "column": 0, "end_line": null, "path": "src/embed.py", "severity": 0, "type": "convention"}, "symbol": "line-too-long", "message": "Line too long (111/100)", "message_id": "C0301", "severity": 0},{"type": "convention", "location": {"module": "embed", "python_object": "", "line": 136, "column": 0, "end_line": null, "path": "src/embed.py", "severity": 0, "type": "convention"}, "symbol": "line-too-long", "message": "Line too long (160/100)", "message_id": "C0301", "severity": 0},{"type": "convention", "location": {"module": "embed", "python_object": "", "line": 140, "column": 0, "end_line": null, "path": "src/embed.py", "severity": 0, "type": "convention"}, "symbol": "line-too-long", "message": "Line too long (104/100)", "message_id": "C0301", "severity": 0},{"type": "convention", "location": {"module": "embed", "python_object": "", "line": 142, "column": 0, "end_line": null, "path": "src/embed.py", "severity": 0, "type": "convention"}, "symbol": "trailing-whitespace", "message": "Trailing whitespace", "message_id": "C0303", "severity": 0},{"type": "convention", "location": {"module": "embed", "python_object": "", "line": 148, "column": 0, "end_line": null, "path": "src/embed.py", "severity": 0, "type": "convention"}, "symbol": "line-too-long", "message": "Line too long (195/100)", "message_id": "C0301", "severity": 0},{"type": "convention", "location": {"module": "embed", "python_object": "", "line": 149, "column": 0, "end_line": null, "path": "src/embed.py", "severity": 0, "type": "convention"}, "symbol": "line-too-long", "message": "Line too long (151/100)", "message_id": "C0301", "severity": 0},{"type": "convention", "location": {"module": "embed", "python_object": "", "line": 150, "column": 0, "end_line": null, "path": "src/embed.py", "severity": 0, "type": "convention"}, "symbol": "line-too-long", "message": "Line too long (108/100)", "message_id": "C0301", "severity": 0},{"type": "convention", "location": {"module": "embed", "python_object": "", "line": 151, "column": 0, "end_line": null, "path": "src/embed.py", "severity": 0, "type": "convention"}, "symbol": "line-too-long", "message": "Line too long (116/100)", "message_id": "C0301", "severity": 0},{"type": "convention", "location": {"module": "embed", "python_object": "", "line": 156, "column": 0, "end_line": null, "path": "src/embed.py", "severity": 0, "type": "convention"}, "symbol": "line-too-long", "message": "Line too long (119/100)", "message_id": "C0301", "severity": 0},{"type": "convention", "location": {"module": "embed", "python_object": "", "line": 158, "column": 0, "end_line": null, "path": "src/embed.py", "severity": 0, "type": "convention"}, "symbol": "trailing-whitespace", "message": "Trailing whitespace", "message_id": "C0303", "severity": 0},{"type": "convention", "location": {"module": "embed", "python_object": "", "line": 166, "column": 0, "end_line": null, "path": "src/embed.py", "severity": 0, "type": "convention"}, "symbol": "trailing-newlines", "message": "Trailing newlines", "message_id": "C0305", "severity": 0},{"type": "convention", "location": {"module": "embed", "python_object": "", "line": 1, "column": 0, "end_line": null, "path": "src/embed.py", "severity": 0, "type": "convention"}, "symbol": "missing-module-docstring", "message": "Missing module docstring", "message_id": "C0114", "severity": 0},{"type": "convention", "location": {"module": "embed", "python_object": "Embed", "line": 10, "column": 0, "end_line": 10, "path": "src/embed.py", "severity": 0, "type": "convention"}, "symbol": "missing-class-docstring", "message": "Missing class docstring", "message_id": "C0115", "severity": 0},{"type": "convention", "location": {"module": "embed", "python_object": "Embed.err_not_tournament", "line": 18, "column": 4, "end_line": 18, "path": "src/embed.py", "severity": 0, "type": "convention"}, "symbol": "missing-function-docstring", "message": "Missing function or method docstring", "message_id": "C0116", "severity": 0},{"type": "convention", "location": {"module": "embed", "python_object": "Embed.err_tournament", "line": 26, "column": 4, "end_line": 26, "path": "src/embed.py", "severity": 0, "type": "convention"}, "symbol": "missing-function-docstring", "message": "Missing function or method docstring", "message_id": "C0116", "severity": 0},{"type": "convention", "location": {"module": "embed", "python_object": "Embed.rest_points_tournament", "line": 34, "column": 4, "end_line": 34, "path": "src/embed.py", "severity": 0, "type": "convention"}, "symbol": "missing-function-docstring", "message": "Missing function or method docstring", "message_id": "C0116", "severity": 0},{"type": "convention", "location": {"module": "embed", "python_object": "Embed.show_points", "line": 42, "column": 4, "end_line": 42, "path": "src/embed.py", "severity": 0, "type": "convention"}, "symbol": "missing-function-docstring", "message": "Missing function or method docstring", "message_id": "C0116", "severity": 0},{"type": "convention", "location": {"module": "embed", "python_object": "Embed.show_points", "line": 45, "column": 14, "end_line": 45, "path": "src/embed.py", "severity": 0, "type": "convention"}, "symbol": "invalid-name", "message": "Variable name \"v\" doesn't conform to snake_case naming style", "message_id": "C0103", "severity": 0},{"type": "convention", "location": {"module": "embed", "python_object": "Embed.sync_activate", "line": 52, "column": 4, "end_line": 52, "path": "src/embed.py", "severity": 0, "type": "convention"}, "symbol": "missing-function-docstring", "message": "Missing function or method docstring", "message_id": "C0116", "severity": 0},{"type": "convention", "location": {"module": "embed", "python_object": "Embed.sync_is_activate", "line": 60, "column": 4, "end_line": 60, "path": "src/embed.py", "severity": 0, "type": "convention"}, "symbol": "missing-function-docstring", "message": "Missing function or method docstring", "message_id": "C0116", "severity": 0},{"type": "convention", "location": {"module": "embed", "python_object": "Embed.not_data", "line": 68, "column": 4, "end_line": 68, "path": "src/embed.py", "severity": 0, "type": "convention"}, "symbol": "missing-function-docstring", "message": "Missing function or method docstring", "message_id": "C0116", "severity": 0},{"type": "convention", "location": {"module": "embed", "python_object": "Embed.sync_end", "line": 76, "column": 4, "end_line": 76, "path": "src/embed.py", "severity": 0, "type": "convention"}, "symbol": "missing-function-docstring", "message": "Missing function or method docstring", "message_id": "C0116", "severity": 0},{"type": "convention", "location": {"module": "embed", "python_object": "Embed.show_stats", "line": 84, "column": 4, "end_line": 84, "path": "src/embed.py", "severity": 0, "type": "convention"}, "symbol": "missing-function-docstring", "message": "Missing function or method docstring", "message_id": "C0116", "severity": 0},{"type": "convention", "location": {"module": "embed", "python_object": "Embed.show_stats", "line": 87, "column": 14, "end_line": 87, "path": "src/embed.py", "severity": 0, "type": "convention"}, "symbol": "invalid-name", "message": "Variable name \"v\" doesn't conform to snake_case naming style", "message_id": "C0103", "severity": 0},{"type": "convention", "location": {"module": "embed", "python_object": "Embed.show_stats", "line": 101, "column": 19, "end_line": 101, "path": "src/embed.py", "severity": 0, "type": "convention"}, "symbol": "unidiomatic-typecheck", "message": "Use isinstance() rather than type() for a typecheck.", "message_id": "C0123", "severity": 0},{"type": "convention", "location": {"module": "embed", "python_object": "Embed.show_stats", "line": 106, "column": 20, "end_line": 106, "path": "src/embed.py", "severity": 0, "type": "convention"}, "symbol": "invalid-name", "message": "Variable name \"c\" doesn't conform to snake_case naming style", "message_id": "C0103", "severity": 0},{"type": "convention", "location": {"module": "embed", "python_object": "Embed.show_stats", "line": 106, "column": 22, "end_line": 106, "path": "src/embed.py", "severity": 0, "type": "convention"}, "symbol": "invalid-name", "message": "Variable name \"p\" doesn't conform to snake_case naming style", "message_id": "C0103", "severity": 0},{"type": "convention", "location": {"module": "embed", "python_object": "Embed.show_stats", "line": 109, "column": 28, "end_line": 109, "path": "src/embed.py", "severity": 0, "type": "convention"}, "symbol": "multiple-statements", "message": "More than one statement on a single line", "message_id": "C0321", "severity": 0},{"type": "convention", "location": {"module": "embed", "python_object": "Embed.show_rounds", "line": 118, "column": 4, "end_line": 118, "path": "src/embed.py", "severity": 0, "type": "convention"}, "symbol": "missing-function-docstring", "message": "Missing function or method docstring", "message_id": "C0116", "severity": 0},{"type": "convention", "location": {"module": "embed", "python_object": "Embed.show_rounds", "line": 121, "column": 8, "end_line": 129, "path": "src/embed.py", "severity": 0, "type": "convention"}, "symbol": "consider-using-enumerate", "message": "Consider using enumerate instead of iterating with range and len", "message_id": "C0200", "severity": 0},{"type": "convention", "location": {"module": "embed", "python_object": "Embed.show_server_info", "line": 134, "column": 4, "end_line": 134, "path": "src/embed.py", "severity": 0, "type": "convention"}, "symbol": "missing-function-docstring", "message": "Missing function or method docstring", "message_id": "C0116", "severity": 0},{"type": "convention", "location": {"module": "embed", "python_object": "Embed.show_commands", "line": 146, "column": 4, "end_line": 146, "path": "src/embed.py", "severity": 0, "type": "convention"}, "symbol": "missing-function-docstring", "message": "Missing function or method docstring", "message_id": "C0116", "severity": 0},{"type": "convention", "location": {"module": "embed", "python_object": "Embed.tournament_deleted", "line": 162, "column": 4, "end_line": 162, "path": "src/embed.py", "severity": 0, "type": "convention"}, "symbol": "missing-function-docstring", "message": "Missing function or method docstring", "message_id": "C0116", "severity": 0}])</script>
+    </footer>
+  </body>
+</html>
