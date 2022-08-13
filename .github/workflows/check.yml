@@ -30,4 +30,4 @@ jobs:
       - uses: smelly-python/smell-my-pr@main
         with: 
           github-token: ${{secrets.GIT_TOKEN}}
-          command: smelly-python -d src
+          command: pipenv run smelly-python -d <module>
