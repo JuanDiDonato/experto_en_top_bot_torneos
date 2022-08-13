@@ -13,13 +13,9 @@ name: "Code build validation"
 
 on:
   push:
-    branches: [ "master" ]
+    branches: [master]
   pull_request:
-    # The branches below must be a subset of the branches above
-    branches: [ "master" ]
-  schedule:
-    - cron: '30 22 * * 1'
-
+    branches: [master]
 jobs:
   analyze:
     name: Analyze and check
