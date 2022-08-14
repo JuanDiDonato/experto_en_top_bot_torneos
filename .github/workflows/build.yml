@@ -6,21 +6,17 @@ on:
     branches: [master]
 jobs:
   analyze:
-    name: Analyze and check
+    name: Analyze
     runs-on: ubuntu-latest
     permissions:
       actions: read
       contents: read
-      checks: write
-      pull-requests: write
       security-events: write
 
     strategy:
       fail-fast: false
       matrix:
         language: [ 'python' ]
-        # CodeQL supports [ 'cpp', 'csharp', 'go', 'java', 'javascript', 'python', 'ruby' ]
-        # Learn more about CodeQL language support at https://aka.ms/codeql-docs/language-support
 
     steps:
     - name: Checkout repository
