@@ -2,8 +2,8 @@
 
 import time
 
-from riot_api.riot_api import RiotAPI
 from database.db import Database
+from riot_api.riot_api import RiotAPI
 
 
 class Threadings:
