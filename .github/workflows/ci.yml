@@ -22,6 +22,6 @@ jobs:
        uses: sunnysid3up/python-linter@master
        with:
          source: "src"
-         strict : "low"
+         strict : "medium"
          pylint-options: "--rcfile=setup.cfg"
          mypy-options: "--ignore-missing-imports --show-error-codes"
