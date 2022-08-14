@@ -23,5 +23,5 @@ jobs:
        with:
          source: "src"
          strict : "medium"
-         pylint-options: "--rcfile=setup.cfg"
+         pylint-options: "--rcfile=setup.cfg --errors-only"
          mypy-options: "--ignore-missing-imports --show-error-codes"
