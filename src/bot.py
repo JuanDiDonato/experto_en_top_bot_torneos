@@ -2,8 +2,6 @@
 
 import datetime
 import os
-import threading
-import time
 from datetime import date
 from threading import Timer
 
@@ -14,6 +12,7 @@ from dotenv import load_dotenv
 from embed import Embed
 from league.league import Tournament
 from threadings import Threadings
+from services.syncro import Syncro
 
 # Variables de entorno
 load_dotenv()
@@ -22,106 +21,75 @@ TOKEN = os.getenv("TOKEN")
 # Gestion de mensajes
 msg = Embed()
 
-# Threading
+# Gestion de subprocesos (Threading)
 th = Threadings()
+
+syncro = Syncro()
 
 bot = commands.Bot(command_prefix=".")  # prefix del bot
 
 
-"""
-Funcion para manejar intevalos
-"""
-
-
 def setInterval(timer, task):
+
+    """
+    Funcion para manejar intevalos
+    """
+
     isStop = task()
     if not isStop:
         Timer(timer, setInterval, [timer, task]).start()
 
 
-"""
-Evento de inicio del bot
-"""
-
-
 @bot.event
 async def on_ready():
+
+    """
+    Evento de inicio del bot
+    """
+
     await bot.change_presence(activity=discord.Game(name=".comandos para mas info!"))
-    print("Bot conectado")
-    auto_sync_thr = threading.Thread(target=auto_sync, name="auto_sync")
-    auto_sync_thr.start()
+    syncro.enable_auto_sync()
 
-
-"""
-Threading que ejecuta la busqueda de usuarios
-"""
-
-
-def get_summoners():
-    get_summ = threading.Thread(target=th.tr_get_summoners, name="get_summoners")
-    if not get_summ.is_alive():
-        get_summ.start()
-
-
-"""
-Threading que ejecuta la busqueda de torneos
-"""
-
-
-def sync_tournament():
-    get_tour = threading.Thread(target=th.tr_sync_tournament, name="sync_tournament")
-    if not get_tour.is_alive():
-        get_tour.start()
-
-
-"""
-Threading que ejecuta la syncro con la api de riot
-"""
-
-
-def update_history():
-    get_hist = threading.Thread(target=th.tr_update_history, name="update_history")
-    if not get_hist.is_alive():
-        get_hist.start()
-
-
-"""
-Retorna informacion del servidor
-"""
+    print("Bot conectado y en linea ")
 
 
 @bot.command()
 async def info(ctx):
+
+    """
+    Retorna informacion del servidor
+    """
+
     await msg.show_server_info(ctx)
-
-
-"""
-Muestra los comandos del bot
-"""
 
 
 @bot.command()
 async def comandos(ctx):
+
+    """
+    Muestra los comandos del bot
+    """
+
     await msg.show_commands(ctx)
-
-
-"""
-Muestra las fechas del torneo
-"""
 
 
 @bot.command()
 async def fechas(ctx):
+
+    """
+    Muestra las fechas del torneo
+    """
+
     await msg.show_rounds(ctx, th.rounds_saved)
-
-
-"""
-Guarda el nombre de invocador en la base de datos
-"""
 
 
 @bot.command()
 async def guardar(ctx, *args):
+
+    """
+    Guarda el nombre de invocador en la base de datos
+    """
+
     data = [item for item in args]
     if len(data) > 2:
         player = {
@@ -137,12 +105,13 @@ async def guardar(ctx, *args):
     await ctx.send(f"{data[0]} guardado.")
 
 
-"""
-Genera la tabla de puntos
-"""
-
 
 async def puntos(ctx, players):
+
+    """
+    Genera la tabla de puntos
+    """
+
     list_players = []
     for i in players:
         th.points[i] = 0
@@ -154,23 +123,25 @@ async def puntos(ctx, players):
     th.db.insert_many_players(list_players)
 
 
-"""
-Muestra en el canal de ds las estadisticas 
-"""
-
 
 async def display_wins(ctx, data):
+
+    """
+    Muestra en el canal de ds las estadisticas 
+    """
+
     for d in data:
         await msg.show_stats(ctx, d)
 
 
-"""
-Ordena las estadisticas obtenidas desde la api de riot
-"""
-
 
 @bot.command()
 async def partidas(ctx):
+
+    """
+    Ordena las estadisticas obtenidas desde la api de riot
+    """
+
     wins_by_summoners = []
     if len(th.stadistics) > 0:
         for s in th.stadistics:
@@ -217,13 +188,13 @@ async def partidas(ctx):
         await msg.not_data(ctx)
 
 
-"""
-Crea la liga con una lista de jugadores
-"""
-
-
 @bot.command()
 async def liga(ctx, *args):
+
+    """
+    Crea la liga con una lista de jugadores
+    """
+
     if len(th.rounds_saved) == 0 and len(th.players_saved) == 0:
         players = [item for item in args]  # Convierte los argumentos a una lista
         league = Tournament(players)
@@ -249,28 +220,29 @@ async def liga(ctx, *args):
         else:
             await ctx.send("Creando liga...")
             await msg.show_rounds(ctx, rounds)
-            sync()
+            syncro.sync()
     else:
         await msg.err_tournament(ctx)
 
 
-"""
-Muestra la tabla de puntuacion de cada participante del torneo
-"""
-
-
 @bot.command()
 async def tabla(ctx):
+
+    """
+    Muestra la tabla de puntuacion de cada participante del torneo
+    """
+
     await msg.show_points(ctx, th.points)
 
-
-"""
-Suma un punto a un jugador
-"""
 
 
 @bot.command()
 async def para(ctx, player):
+
+    """
+    Suma un punto a un jugador
+    """
+
     try:
         if th.points[player] >= 0:
             th.points[player] += 1
@@ -283,13 +255,14 @@ async def para(ctx, player):
         await ctx.send(f"{player} no esta en este torneo")
 
 
-"""
-Elimina todos los puntos del torneo
-"""
-
 
 @bot.command()
 async def reiniciar(ctx):
+
+    """
+    Elimina todos los puntos del torneo
+    """
+
     if len(th.rounds_saved) > 0 and len(th.players_saved) > 0:
         th.points.clear()
         for p in th.players_saved:
@@ -301,62 +274,20 @@ async def reiniciar(ctx):
         await msg.err_not_tournament(ctx)
 
 
-"""
-Borra el torneo activo
-"""
-
 
 @bot.command()
 async def borrar(ctx):
+
+    """
+    Borra el torneo activo
+    """
+
     if len(th.rounds_saved) > 0 and len(th.players_saved) > 0:
         th.db.delete_tournament()
         await msg.tournament_deleted(ctx)
-        sync()
+        syncro.sync()
     else:
         await msg.err_not_tournament(ctx)
-
-
-"""
-Ejecuta las funciones para obtener el torneo activo desde la base de datos y las
-estadisticas desde la api de riot
-Solo hace la syncro si no esta hay activa ninguna otra
-"""
-
-
-def sync():
-    fuctions_thr = {
-        "get_summoners": get_summoners,
-        "sync_tournament": sync_tournament,
-        "update_history": update_history,
-    }
-    sync_active = {
-        "get_summoners": False,
-        "sync_tournament": False,
-        "update_history": False,
-    }
-    for thr in threading.enumerate():
-        if (
-            thr.name == "get_summoner"
-            or thr.name == "sync_tournament"
-            or thr.name == "update_history"
-        ):
-            sync_active[thr.name] = True
-
-    for k, v in sync_active.items():
-        if v == False:
-            fuctions_thr[k]()
-
-
-"""
-Sincronizacion de datos automatica
-"""
-
-
-def auto_sync():
-    while True:
-        sync()
-        time.sleep(600)  # diez minutos
-
 
 if "__main__" == __name__:
     bot.run(TOKEN)

@@ -15,7 +15,6 @@ class Embed:
     """
     No hay un torneo
     """
-
     async def err_not_tournament(self, ctx):
         embed = discord.Embed(
             title="⚠️ 🚨 Ocurrio un error",
@@ -26,7 +25,6 @@ class Embed:
     """
     Ya hay un torneo
     """
-
     async def err_tournament(self, ctx):
         embed = discord.Embed(
             title="⚠️ 🚨 Ocurrio un error",
@@ -37,7 +35,6 @@ class Embed:
     """
     Reinicio de puntos
     """
-
     async def rest_points_tournament(self, ctx):
         embed = discord.Embed(
             title=f"Reinicio del torneo Los Pibardos © {self.today.year}",
@@ -48,7 +45,6 @@ class Embed:
     """
     Muestra los puntos
     """
-
     async def show_points(self, ctx, points):
         embed = discord.Embed(
             title="Puntos de la Liga",
@@ -63,7 +59,6 @@ class Embed:
     """
     Aviso de la sync
     """
-
     async def sync_activate(self, ctx):
         embed = discord.Embed(
             title="⚠️ Sincronizacion activada",
@@ -74,7 +69,6 @@ class Embed:
     """
     Aviso de sync ya activa
     """
-
     async def sync_is_activate(self, ctx):
         embed = discord.Embed(
             title="⚠️ Ya hay una sincronizacion activa",
@@ -85,7 +79,6 @@ class Embed:
     """
     Estadisticas vacias
     """
-
     async def not_data(self, ctx):
         embed = discord.Embed(
             title="⚠️ No hay estadisticas para mostrar",
@@ -96,7 +89,6 @@ class Embed:
     """
     Aviso de finalizacion de la sync
     """
-
     async def sync_end(self, ctx):
         embed = discord.Embed(
             title="✅ Sincronizacion finalizada",
@@ -107,7 +99,6 @@ class Embed:
     """
     Muesta estadisticas
     """
-
     async def show_stats(self, ctx, data):
         embed = discord.Embed(
             title="Estadisticas",
