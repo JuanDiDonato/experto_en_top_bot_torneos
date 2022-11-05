@@ -22,8 +22,6 @@ summoners = {
 """
 Consume la API de Riot Games para obtener datos de las cuentas de Lol
 """
-
-
 class RiotAPI:
 
     """

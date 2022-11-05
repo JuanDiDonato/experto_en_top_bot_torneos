@@ -4,27 +4,33 @@ import time
 
 from database.db import Database
 from riot_api.riot_api import RiotAPI
+from services.threading_services.statistics_service import StatisticsService
 
 
-class Threadings:
-    def __init__(self):
-        self.account_data = RiotAPI()
-        self.db = Database()
-        self.stadistics = []
-        self.points = {}
-        self.rounds_saved = []
-        self.players_saved = []
-        self.summoners = {}
-        self.db.start_db()
-        self.count = 0
+class Threading:
+
+    """
+    Posee las funciones que se ejecutaran en los diferentes subprocesos
+    """
+
+    __account_data = RiotAPI()
+    __db = Database()
+    points = {}
+    rounds_saved = []
+    players_saved = []
+    summoners = {}
+    count = 0
 
     def tr_update_history(self):
+        statistics = []
         try:
             print("Sincronizando historial")
-            data = self.account_data.get_players_data(self.summoners)
+            data = self.__account_data.get_players_data(self.summoners)
+
             if len(data) > 0:
-                self.stadistics.clear()
-                self.stadistics.extend(data)
+                statistics.append(data)
+                StatisticsService.set_statistics(statistics)
+
             print("Datos establecidos")
             self.count = 0
         except:
@@ -37,7 +43,7 @@ class Threadings:
                 self.count = 0
 
     def tr_sync_tournament(self):
-        tournament = self.db.get_tournament()
+        tournament = self.__db.get_tournament()
         if len(tournament) > 0:
             self.points.clear()
             self.rounds_saved.clear()
@@ -52,10 +58,10 @@ class Threadings:
             self.points.clear()
             self.rounds_saved.clear()
             self.players_saved.clear()
-            self.stadistics.clear()
+            self.statistics.clear()
 
     def tr_get_summoners(self):
-        summoners_list = self.db.get_players()
+        summoners_list = self.__db.get_players()
         for s in summoners_list:
             if self.summoners.get(s["player_ds_id"]) == None:
                 self.summoners.update({s["player_ds_id"]: s["player_lol_name"]})
