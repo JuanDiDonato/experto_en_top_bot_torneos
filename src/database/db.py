@@ -18,7 +18,12 @@ class Database:
     __TOURNAMENTS : str = "tournaments"
     __PLAYER_DS_ID_PARAM :str = "player_ds_id"
 
-    def conection(self):
+    def __init__(self):
+        self._tournament = None
+        self._players = None
+        self.db = None
+
+    def connection(self):
         try:
             client = MongoClient(self.__URI)
             print(self.__DATABASE_MESSAGE)
@@ -46,7 +51,7 @@ class Database:
     Agrega un jugador a la db. si ya existe, acutaliza su nombre
     """
     def insert_one_player(self, player):
-        if self.exists(player[self.__PLAYER_DS_ID_PARAM]) == False:
+        if not self.exists(player[self.__PLAYER_DS_ID_PARAM]):
             self._players.insert_one(player)
         else:
             self._players.update_one(
@@ -61,7 +66,7 @@ class Database:
         new_players = []
 
         for player in players:
-            if self.exists(player["player_ds_id"]) == False:
+            if not self.exists(player["player_ds_id"]):
                 new_players.append(player)
 
         if len(new_players) > 0:
@@ -107,5 +112,5 @@ class Database:
     Inicia la base de datos
     """
     def start_db(self):
-        self.conection()
+        self.connection()
         self.create_collections()

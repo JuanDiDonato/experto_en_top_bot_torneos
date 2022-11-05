@@ -1,207 +1,150 @@
 # -*- coding: utf-8 -*-
 
-import datetime
+# python modules
 from datetime import date
-from operator import itemgetter
 
+# third modules
 import discord
 import humanize
 
+# app modules
+from services.embed_builder import EmbedBuilder
+from services.embed_statistics_builder import EmbedStatisticsBuilder
+from models.Statistics import Statistics
+
 
 class Embed:
-    def __init__(self):
-        self.today = date.today()  # Fecha actual
+    __embed_service: EmbedBuilder = EmbedBuilder()  # Constructor de embeds
+    __embed_statistics_service: EmbedStatisticsBuilder = EmbedStatisticsBuilder()
+    __today: date = date.today()  # Fecha actual
+    __WINS: str = "wins"
+    __DEFEAT: str = "defeats"
+    __WINRATE: str = "wins_p"
+    __MATCHES_PLAYED: str = "played"
+    __THUMBNAIL: str = "https://pbs.twimg.com/profile_images/1268868861782298626/doLOgx55.jpg"
+    __ADMIN_ID: str = "<@602993773940572220>"
 
-    """
-    No hay un torneo
-    """
+    # Titulos
+    __ERROR: str = "Ocurrio un error"
+    __RESTART_TOURNAMENT: str = f"Reinicio del torneo Los Pibardos © {__today.year}"
+
+    # Descripciones
+    __POINTS: str = f"Puntajes del Torneo Oficial Los Pibardos todos los derechos reservados © {__today.year}"
+    __SERVER_INFO: str = f"Server de Los Pibardos todos los derechos reservados © {__today.year}"
+
     async def err_not_tournament(self, ctx):
-        embed = discord.Embed(
-            title="⚠️ 🚨 Ocurrio un error",
-            description="No hay un torneo activo actualmente",
-        )
-        await ctx.send(embed=embed)
 
-    """
-    Ya hay un torneo
-    """
+        """
+        No hay un torneo activo
+        """
+
+        message: str = "No hay un torneo activo"
+        await self.__embed_service.create_embed(self.__ERROR, message).send_embed(ctx=ctx)
+
     async def err_tournament(self, ctx):
-        embed = discord.Embed(
-            title="⚠️ 🚨 Ocurrio un error",
-            description="Actualmente ya hay un torneo activo, y hasta que este termine o se borre no se puede crear otro. Podes ver este torneo usando '.fechas' y '.tabla'. Si no aparece nada intenta sincronizar primero con .sync",
-        )
-        await ctx.send(embed=embed)
 
-    """
-    Reinicio de puntos
-    """
+        """
+        Ya hay un torneo activo
+        """
+
+        message: str = "Actualmente ya hay un torneo activo, y hasta que este termine o se borre no se puede crear otro."
+        await self.__embed_service.create_embed(self.__ERROR, message).send_embed(ctx=ctx)
+
     async def rest_points_tournament(self, ctx):
-        embed = discord.Embed(
-            title=f"Reinicio del torneo Los Pibardos © {self.today.year}",
-            description="Todos los puntajes del torneo se reiniciaron a cero",
-        )
-        await ctx.send(embed=embed)
 
-    """
-    Muestra los puntos
-    """
+        """
+        Reinicio de los puntos del torneo
+        """
+
+        message: str = "Todos los puntajes del torneo se reiniciaron a cero"
+        await self.__embed_service.create_embed(self.__RESTART_TOURNAMENT, message).send_embed(ctx=ctx)
+
     async def show_points(self, ctx, points):
-        embed = discord.Embed(
-            title="Puntos de la Liga",
-            description="Puntajes del Torneo Oficial "
-            "Los Pibardos "
-            f"todos los derechos reservados © {self.today.year}",
-        )
+
+        """
+        Muestra los puntos del torneo
+        """
+
+        title: str = "Puntos de la liga"
+        embed = self.__embed_service.create_embed(title, self.__POINTS)
+
         for k, v in points.items():
-            embed.add_field(name=f"Puntos de:", value=f"{k} : {v}")
-        await ctx.send(embed=embed)
+            embed.with_field(name=f"Puntos de:", value=f"{k} : {v}")
 
-    """
-    Aviso de la sync
-    """
-    async def sync_activate(self, ctx):
-        embed = discord.Embed(
-            title="⚠️ Sincronizacion activada",
-            description="Comenzo una sincronizacion con la API de Riot Games y la base de datos para obtener registros.",
-        )
-        await ctx.send(embed=embed)
+        await embed.send_embed(ctx=ctx)
 
-    """
-    Aviso de sync ya activa
-    """
-    async def sync_is_activate(self, ctx):
-        embed = discord.Embed(
-            title="⚠️ Ya hay una sincronizacion activa",
-            description="Aguarde un momento mientras termina la syncro actual.",
-        )
-        await ctx.send(embed=embed)
-
-    """
-    Estadisticas vacias
-    """
     async def not_data(self, ctx):
-        embed = discord.Embed(
-            title="⚠️ No hay estadisticas para mostrar",
-            description="Los datos se obtienen automaticamente, aguarde un momento y vuelva a intentar",
-        )
-        await ctx.send(embed=embed)
 
-    """
-    Aviso de finalizacion de la sync
-    """
-    async def sync_end(self, ctx):
-        embed = discord.Embed(
-            title="✅ Sincronizacion finalizada",
-            description="Se sincronizaron los datos correctamente.",
-        )
-        await ctx.send(embed=embed)
+        """
+        Estadisticas vacias
+        """
 
-    """
-    Muesta estadisticas
-    """
-    async def show_stats(self, ctx, data):
-        embed = discord.Embed(
-            title="Estadisticas",
-            description=f"Estas son las estadisticas de las partidas de los ultimos 3 dias de {data['summoner']}",
-        )
-        for k, v in data.items():
-            if k == "wins":
-                try:
-                    most_wins = max(v.items(), key=itemgetter(1))[
-                        0
-                    ]  # Retorna con que campeon gano mas
-                    embed.add_field(
-                        name=f"Gano mas partidas con {most_wins}",
-                        value=f" {v[most_wins]} victorias",
-                    )
-                except:
-                    continue
-            elif k == "defeats":
-                try:
-                    most_defeat = max(v.items(), key=itemgetter(1))[
-                        0
-                    ]  # Retorna con que campeon perdio mas
-                    embed.add_field(
-                        name=f"Perdio mas partidas con {most_defeat}",
-                        value=f"{v[most_defeat]} derrotas",
-                    )
-                except:
-                    continue
-            elif k == "wins_p":
-                if type(v) == str:
-                    embed.add_field(name=f"Porcentaje de victorias", value=f"{v}")
-                else:
-                    embed.add_field(
-                        name=f"Porcentaje de victorias", value=f"{int(v * 100)} %"
-                    )
-            elif k == "played":
-                for c, p in v.items():
-                    try:
-                        winrate = int((data["wins"][c] / p) * 100)
-                    except:
-                        winrate = 0
-                    embed.add_field(
-                        name=f"{c}", value=f"Jugo: {p} partidas, Winrate: {winrate} %"
-                    )
-            else:
-                continue
-        await ctx.send(embed=embed)
+        message: str = "Los datos se obtienen automaticamente, aguarde un momento y vuelva a intentar"
+        await self.__embed_service.create_embed(self.__ERROR, message).send_embed(ctx=ctx)
 
-    """
-    Muestra las fechas de la liga
-    """
+    async def show_stats(self, ctx, data: Statistics):
+
+        """
+        Muesta las estadisticas
+        """
+
+        title: str = "Estadisticas"
+        description: str = f"Estas son las estadisticas de las partidas de los ultimos 3 dias de {data.get_summoner}"
+        await self.__embed_statistics_service.with_field(title, description).with_statistics(data).send_embed(ctx=ctx)
 
     async def show_rounds(self, ctx, rounds):
+
+        """
+        Muestra las fechas de la liga
+        """
+
         count = 0
         match = 1
+
         for i in range(0, len(rounds)):
-            embed = discord.Embed(
-                title=f"Torneo de Lol Fecha {i + 1}",
-                description=f"Torneo Oficial Fecha {i + 1} "
-                "Los Pibardos "
-                f"todos los derechos reservados © {self.today.year}",
-            )
+
+            title: str = f"Torneo de Lol Fecha {i + 1}"
+            description: str = f"Torneo Oficial Fecha {i + 1} Los Pibardos todos los derechos reservados © {self.__today.year}"
+            embed: EmbedBuilder = self.__embed_service.create_embed(title, description)
+
             while count < len(rounds[i]):
-                embed.add_field(
+                embed.with_field(
                     name=f"Partida {match}:",
-                    value=f"{rounds[i][count]} VS {rounds[i][count+1]}",
+                    value=f"{rounds[i][count]} VS {rounds[i][count + 1]}",
                 )
                 match = match + 1
                 count = count + 2
-            await ctx.send(embed=embed)
+
+            await embed.send_embed(ctx=ctx)
             count = 0
 
-    """
-    Informacion del server
-    """
-
     async def show_server_info(self, ctx):
-        embed = discord.Embed(
-            title=f"{ctx.guild.name}",
-            description=f"Server de Los Pibardos todos los derechos reservados © {self.today.year}",
-            timestamp=datetime.datetime.utcnow(),
-            color=discord.Color.red(),
-        )
-        embed.add_field(
-            name="Creado el dia", value=humanize.naturaltime(ctx.guild.created_at)
-        )
-        embed.add_field(name="Admin", value="<@602993773940572220>")
-        embed.add_field(name="Server id ", value=f"{ctx.guild.id}")
-        embed.set_thumbnail(
-            url="https://pbs.twimg.com/profile_images/1268868861782298626/doLOgx55.jpg"
-        )
-        await ctx.send(embed=embed)
 
-    """
-    Comandos del server
-    """
+        """
+        Muestra la nformacion del server
+        """
+
+        title: str = f"{ctx.guild.name}"
+        description: str = self.__SERVER_INFO
+
+        embed: EmbedBuilder = self.__embed_service.create_embed(title, description)
+
+        embed.with_field(name="Creado el dia", value=humanize.naturaltime(ctx.guild.created_at))
+        embed.with_field(name="Admin", value=self.__ADMIN_ID)
+        embed.with_field(name="Server id ", value=f"{ctx.guild.id}")
+        embed.with_thumbnail(url=self.__THUMBNAIL)
+
+        await embed.send_embed(ctx=ctx)
 
     async def show_commands(self, ctx):
+
+        """
+        Comandos del server
+        """
+
         embed = discord.Embed(
             title="Comandos de Experto en Top:",
             description=f"Creado por <@411704033225605130>, proyecto en desarrollo. Todos los derechos reservados © {self.today.year}",
-            timestamp=datetime.datetime.utcnow(),
-            color=discord.Color.red(),
         )
         embed.add_field(
             name=".liga + @nombre del participante + @nombre del participante + ...",

@@ -5,7 +5,7 @@ import threading
 import time
 
 # App modules
-from ..threadings import Threadings 
+from ..threading import Threading
 
 class Syncro:
 
@@ -14,10 +14,11 @@ class Syncro:
     """
 
     # Atributos privados
-    __threadings_handler : Threadings = Threadings() 
+    __threadings_handler : Threading = Threading()
     __SUMMONERS_THREADING_NAME : str = "get_summoners"
     __TOURNAMENT_THREADING_NAME : str = "sync_tournament"
     __HISTORY_THREADING_NAME : str = "update_history"
+    __AUTO_SYNC_NAME : str = "auto_sync"
 
     def sync(self):
 
@@ -57,7 +58,7 @@ class Syncro:
         Activa y ejecuta la sincronizacion automatica de datos
         """
 
-        auto_sync_thr = threading.Thread(target=self.__auto_sync, name="auto_sync")
+        auto_sync_thr = threading.Thread(target=self.__auto_sync, name=self.__AUTO_SYNC_NAME)
         auto_sync_thr.start()
 
 
